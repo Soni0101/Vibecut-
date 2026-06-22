@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK From Uploaded Zip
 
 on:
   push:
@@ -23,32 +23,36 @@ jobs:
         distribution: 'zulu'
         java-version: '17'
 
-    - name: Install and Build App
+    - name: Unzip Project and Build APK
       run: |
-        # Safely find the folder containing package.json without any wildcard confusion
-        TARGET_DIR=$(find . -name package.json -not -path "*/node_modules/*" -exec dirname {} \; | head -n 1)
-        echo "Entering project directory: $TARGET_DIR"
+        # 1. Zip file ko server par extract (unzip) karein
+        echo "Extracting vibecut-workspace.zip..."
+        unzip vibecut-workspace.zip -d extracted_project
+        
+        # 2. Extracted folder ke andar package.json ka rasta dhoondhein
+        TARGET_DIR=$(find ./extracted_project -name package.json -not -path "*/node_modules/*" -exec dirname {} \; | head -n 1)
+        
+        if [ -z "$TARGET_DIR" ]; then
+          echo "Error: Zip file ke andar package.json nahi mili!"
+          exit 1
+        fi
+        
+        echo "Project folder mil gaya: $TARGET_DIR"
         cd "$TARGET_DIR"
         
-        # Install packages
+        # 3. Commands ko run karein
         npm install
         npm install @capacitor/core @capacitor/cli @capacitor/android
-        
-        # Build the web assets
         npm run build
         
-        # Initialize Capacitor safely
         npx cap init "VibeCut Workspace" "com.vibecut.app" --web-dir=dist || true
         
-        # Check if android folder already exists, if not, add it
         if [ ! -d "android" ]; then
           npx cap add android
         fi
         
-        # Sync assets to android folder
         npx cap sync android
         
-        # Compile the final APK
         cd android
         chmod +x gradlew
         ./gradlew assembleDebug
