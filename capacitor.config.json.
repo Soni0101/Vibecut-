@@ -1,0 +1,7 @@
+{
+  "appId": "com.vibecut.app",
+  "appName": "VibeCut Workspace",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
+
