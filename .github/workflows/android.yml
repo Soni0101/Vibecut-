@@ -17,20 +17,22 @@ jobs:
       with:
         node-version: 18
 
-    - name: Install Dependencies
+    - name: Find Project and Run Build
       run: |
-        cd * && npm install
-        cd * && npm install @capacitor/core @capacitor/cli @capacitor/android
-
-    - name: Build Web Application
-      run: |
-        cd * && npm run build
-
-    - name: Sync with Capacitor Android
-      run: |
-        cd * && npx cap init "VibeCut Workspace" "com.vibecut.app" --web-dir=dist
-        cd * && npx cap add android
-        cd * && npx cap sync android
+        # Yeh line khud dhoondhegi ki package.json kahan hai
+        TARGET_DIR=$(find . -name package.json -not -path "*/node_modules/*" -exec dirname {} \; | head -n 1)
+        echo "Project folder found at: $TARGET_DIR"
+        cd "$TARGET_DIR"
+        
+        # Sabhi packages install aur build karein
+        npm install
+        npm install @capacitor/core @capacitor/cli @capacitor/android
+        npm run build
+        
+        # Capacitor setup
+        npx cap init "VibeCut Workspace" "com.vibecut.app" --web-dir=dist
+        npx cap add android
+        npx cap sync android
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -40,7 +42,8 @@ jobs:
 
     - name: Build Debug APK
       run: |
-        cd */android
+        TARGET_DIR=$(find . -name package.json -not -path "*/node_modules/*" -exec dirname {} \; | head -n 1)
+        cd "$TARGET_DIR/android"
         ./gradlew assembleDebug
 
     - name: Upload APK Artifact
@@ -48,4 +51,3 @@ jobs:
       with:
         name: VibeCut-Android-APK
         path: "**/android/app/build/outputs/apk/debug/app-debug.apk"
-: 
