@@ -25,7 +25,7 @@ jobs:
 
     - name: Unzip Project and Build APK
       run: |
-        # 1. Zip file ko server par extract (unzip) karein
+        # 1. Zip file ko server par extract karein
         echo "Extracting vibecut-workspace.zip..."
         unzip vibecut-workspace.zip -d extracted_project
         
@@ -40,7 +40,7 @@ jobs:
         echo "Project folder mil gaya: $TARGET_DIR"
         cd "$TARGET_DIR"
         
-        # 3. Commands ko run karein
+        # 3. Web assets build karein
         npm install
         npm install @capacitor/core @capacitor/cli @capacitor/android
         npm run build
@@ -54,6 +54,16 @@ jobs:
         npx cap sync android
         
         cd android
+        
+        # 4. Duplicate Kotlin Class Error ko theek karne ke liye configuration force karein
+        echo "configurations.all {
+            resolutionStrategy {
+                force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+                force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22'
+            }
+        }" >> build.gradle
+        
+        # 5. Build start karein
         chmod +x gradlew
         ./gradlew assembleDebug
 
