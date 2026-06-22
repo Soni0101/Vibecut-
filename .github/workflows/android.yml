@@ -25,19 +25,32 @@ jobs:
 
     - name: Install and Build App
       run: |
-        # Sub-folder ke andar jaane ke liye bilkul direct rasta
-        cd Vibecut-*/ 2>/dev/null || cd vibecut-*/ 2>/dev/null || cd *workspace*/ 2>/dev/null || cd *
+        # Safely find the folder containing package.json without any wildcard confusion
+        TARGET_DIR=$(find . -name package.json -not -path "*/node_modules/*" -exec dirname {} \; | head -n 1)
+        echo "Entering project directory: $TARGET_DIR"
+        cd "$TARGET_DIR"
         
-        # Ek-ek karke simple commands run honge
+        # Install packages
         npm install
         npm install @capacitor/core @capacitor/cli @capacitor/android
+        
+        # Build the web assets
         npm run build
         
-        npx cap init "VibeCut Workspace" "com.vibecut.app" --web-dir=dist
-        npx cap add android
+        # Initialize Capacitor safely
+        npx cap init "VibeCut Workspace" "com.vibecut.app" --web-dir=dist || true
+        
+        # Check if android folder already exists, if not, add it
+        if [ ! -d "android" ]; then
+          npx cap add android
+        fi
+        
+        # Sync assets to android folder
         npx cap sync android
         
+        # Compile the final APK
         cd android
+        chmod +x gradlew
         ./gradlew assembleDebug
 
     - name: Upload APK Artifact
