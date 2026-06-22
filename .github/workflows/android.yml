@@ -17,33 +17,25 @@ jobs:
       with:
         node-version: 18
 
-    - name: Find Project and Run Build
+    - name: Run Build inside Project Folder
       run: |
-        # Yeh line khud dhoondhegi ki package.json kahan hai
-        TARGET_DIR=$(find . -name package.json -not -path "*/node_modules/*" -exec dirname {} \; | head -n 1)
-        echo "Project folder found at: $TARGET_DIR"
-        cd "$TARGET_DIR"
+        # Hum direct us folder ke andar ja rahe hain jo aapne upload kiya hai
+        cd Vibecut-*/ 2>/dev/null || cd vibecut-*/ 2>/dev/null || cd *workspace*/ 2>/dev/null || cd *
         
-        # Sabhi packages install aur build karein
+        echo "Current folder path: \$(pwd)"
+        
+        # Sabhi cheezein ek hi terminal flow mein run hogi
         npm install
         npm install @capacitor/core @capacitor/cli @capacitor/android
         npm run build
         
-        # Capacitor setup
         npx cap init "VibeCut Workspace" "com.vibecut.app" --web-dir=dist
         npx cap add android
         npx cap sync android
-
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '17'
-
-    - name: Build Debug APK
-      run: |
-        TARGET_DIR=$(find . -name package.json -not -path "*/node_modules/*" -exec dirname {} \; | head -n 1)
-        cd "$TARGET_DIR/android"
+        
+        # Java environment set karke yahin se build karenge
+        export JAVA_HOME=\$JAVA_HOME_17_X64
+        cd android
         ./gradlew assembleDebug
 
     - name: Upload APK Artifact
